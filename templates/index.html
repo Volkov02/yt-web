@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YT Downloader</title>
+<style>
+/* ── reset & base ──────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:       #0f1117;
+  --surface:  #1a1d27;
+  --surface2: #22263a;
+  --border:   #2e3250;
+  --accent:   #4f7fff;
+  --accent2:  #7b61ff;
+  --success:  #22c55e;
+  --danger:   #f04747;
+  --warn:     #f5a623;
+  --text:     #e8eaf6;
+  --sub:      #7b82a0;
+  --mono:     'Cascadia Code', 'Consolas', 'Courier New', monospace;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 48px 16px 60px;
+}
+
+/* ── card ──────────────────────────────────────────────── */
+.card {
+  width: 100%;
+  max-width: 660px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 24px 60px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.03);
+}
+
+/* ── header ────────────────────────────────────────────── */
+.header {
+  padding: 28px 32px 24px;
+  background: linear-gradient(135deg, #1b2040 0%, #151829 100%);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.logo {
+  width: 40px; height: 40px;
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+  box-shadow: 0 4px 14px rgba(79,127,255,.4);
+}
+.header-text h1 { font-size: 18px; font-weight: 700; letter-spacing: -.3px; }
+.header-text p  { font-size: 13px; color: var(--sub); margin-top: 2px; }
+
+/* ── body ──────────────────────────────────────────────── */
+.body { padding: 28px 32px 32px; }
+
+/* ── fields ────────────────────────────────────────────── */
+.field { margin-bottom: 18px; }
+label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .8px;
+  color: var(--sub);
+  margin-bottom: 7px;
+}
+.row { display: flex; gap: 8px; align-items: center; }
+
+input[type=text], select {
+  height: 42px;
+  background: var(--surface2);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  font-size: 14px;
+  outline: none;
+  transition: border-color .2s, box-shadow .2s;
+}
+input[type=text] { flex: 1; min-width: 0; padding: 0 14px; }
+input[type=text]::placeholder { color: var(--sub); }
+input[type=text]:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(79,127,255,.15);
+}
+select {
+  padding: 0 12px;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%237b82a0' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 32px;
+}
+select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,127,255,.15); }
+select option { background: var(--surface2); }
+
+/* ── two-col ───────────────────────────────────────────── */
+.grid2 { display: flex; gap: 14px; margin-bottom: 18px; }
+.grid2 .field { margin-bottom: 0; }
+.grow { flex: 1; min-width: 0; }
+
+/* ── buttons ───────────────────────────────────────────── */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  height: 42px; padding: 0 20px;
+  border: none; border-radius: 10px;
+  font-size: 14px; font-weight: 600;
+  cursor: pointer; white-space: nowrap;
+  transition: background .15s, transform .1s, box-shadow .15s, opacity .15s;
+  user-select: none;
+}
+.btn:active:not(:disabled) { transform: scale(.96); }
+.btn:disabled { opacity: .35; cursor: not-allowed; }
+
+.btn-icon { width: 42px; padding: 0; font-size: 16px; }
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(79,127,255,.35);
+}
+.btn-primary:hover:not(:disabled) {
+  box-shadow: 0 6px 22px rgba(79,127,255,.5);
+  filter: brightness(1.1);
+}
+
+.btn-ghost {
+  background: var(--surface2);
+  color: var(--sub);
+  border: 1.5px solid var(--border);
+}
+.btn-ghost:hover:not(:disabled) { color: var(--text); border-color: var(--sub); }
+
+.btn-danger { background: rgba(240,71,71,.15); color: var(--danger); border: 1.5px solid rgba(240,71,71,.3); }
+.btn-danger:hover:not(:disabled) { background: rgba(240,71,71,.25); }
+
+/* ── action row ────────────────────────────────────────── */
+.action-row { display: flex; gap: 10px; margin-bottom: 24px; }
+
+/* ── progress ──────────────────────────────────────────── */
+.progress-wrap {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px 20px;
+  margin-bottom: 20px;
+  display: none;
+  animation: fadeSlide .25s ease;
+}
+.progress-wrap.show { display: block; }
+
+@keyframes fadeSlide {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.progress-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.progress-label {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 13px; font-weight: 600;
+}
+.dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 0 rgba(79,127,255,.4);
+}
+.dot.pulse { animation: pulse 1.4s infinite; }
+.dot.ok    { background: var(--success); box-shadow: none; animation: none; }
+.dot.err   { background: var(--danger);  box-shadow: none; animation: none; }
+
+@keyframes pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(79,127,255,.5); }
+  70%  { box-shadow: 0 0 0 7px rgba(79,127,255,0); }
+  100% { box-shadow: 0 0 0 0 rgba(79,127,255,0); }
+}
+
+.pct-text { font-size: 13px; font-weight: 700; color: var(--text); }
+
+/* bar track */
+.bar-track {
+  background: var(--bg);
+  border-radius: 99px;
+  height: 7px;
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+.bar {
+  height: 100%;
+  border-radius: 99px;
+  background: linear-gradient(90deg, var(--accent) 0%, var(--accent2) 100%);
+  width: 0%;
+  transition: width .4s cubic-bezier(.4,0,.2,1);
+  position: relative;
+  overflow: hidden;
+}
+.bar::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,.25) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: none;
+}
+.bar.active::after { animation: shimmer 1.6s infinite linear; }
+.bar.ok  { background: linear-gradient(90deg, var(--success), #4ade80); }
+.bar.ok::after { animation: none; }
+.bar.err { background: var(--danger); }
+.bar.err::after { animation: none; }
+
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+
+/* stats */
+.stats {
+  display: flex; flex-wrap: wrap; gap: 6px 0;
+}
+.stat-item {
+  flex: 1; min-width: 100px;
+  display: flex; flex-direction: column; gap: 2px;
+}
+.stat-label { font-size: 11px; color: var(--sub); text-transform: uppercase; letter-spacing: .5px; }
+.stat-val   { font-size: 14px; font-weight: 600; color: var(--text); transition: color .3s; }
+.stat-val.accent  { color: var(--accent); }
+.stat-val.success { color: var(--success); }
+.stat-val.danger  { color: var(--danger); }
+
+/* ── divider ───────────────────────────────────────────── */
+.sep { border: none; border-top: 1px solid var(--border); margin: 0 0 20px; }
+
+/* ── logs ──────────────────────────────────────────────── */
+.log-toggle {
+  display: flex; align-items: center; gap: 8px;
+  background: none; border: none;
+  color: var(--sub); font-size: 13px; font-weight: 500;
+  cursor: pointer; padding: 0;
+  transition: color .15s;
+}
+.log-toggle:hover { color: var(--text); }
+.chevron { display: inline-block; transition: transform .22s; font-size: 10px; }
+.log-toggle.open .chevron { transform: rotate(180deg); }
+
+.log-area {
+  display: none;
+  margin-top: 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  max-height: 220px;
+  overflow-y: auto;
+  font-family: var(--mono);
+  font-size: 12px; line-height: 1.65;
+  color: #8b95b8;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+.log-area.show { display: block; animation: fadeSlide .2s ease; }
+.log-area::-webkit-scrollbar { width: 5px; }
+.log-area::-webkit-scrollbar-track { background: transparent; }
+.log-area::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+.log-line { white-space: pre-wrap; word-break: break-all; padding: 1px 0; }
+.log-line + .log-line { border-top: 1px solid rgba(255,255,255,.03); }
+.log-line.warn  { color: var(--warn); }
+.log-line.err   { color: var(--danger); }
+.log-line.info  { color: #7dd3fc; }
+</style>
+</head>
+<body>
+<div class="card">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="logo">⬇</div>
+    <div class="header-text">
+      <h1>YT Downloader</h1>
+      <p>Download videos in any quality</p>
+    </div>
+  </div>
+
+  <div class="body">
+
+    <!-- URL -->
+    <div class="field">
+      <label>Video URL</label>
+      <div class="row">
+        <input type="text" id="url"
+               placeholder="https://www.youtube.com/watch?v=…"
+               autocomplete="off" spellcheck="false"
+               onkeydown="if(event.key==='Enter') startDownload()">
+        <button class="btn btn-ghost btn-icon" onclick="pasteUrl()" title="Paste from clipboard">⎘</button>
+      </div>
+    </div>
+
+    <!-- Quality + Output -->
+    <div class="grid2">
+      <div class="field">
+        <label>Quality</label>
+        <select id="quality">
+          <option value="best">✦ Best available</option>
+          <option value="2160">4K — 2160p</option>
+          <option value="1080" selected>1080p HD</option>
+          <option value="720">720p</option>
+          <option value="480">480p</option>
+          <option value="audio">🎵 Audio MP3</option>
+        </select>
+      </div>
+
+      <div class="field grow">
+        <label>Save to</label>
+        <div class="row">
+          <input type="text" id="outdir" value="{{ default_dir }}" spellcheck="false">
+          <button class="btn btn-ghost btn-icon" onclick="browseFolder()" title="Browse folder">📁</button>
+          <button class="btn btn-ghost btn-icon" onclick="openFolder()"   title="Open folder">↗</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Buttons -->
+    <div class="action-row">
+      <button class="btn btn-primary" id="btn-dl"   onclick="startDownload()">
+        <span id="btn-dl-icon">⬇</span> Download
+      </button>
+      <button class="btn btn-danger"  id="btn-stop" onclick="stopDownload()" disabled>
+        ✕ Stop
+      </button>
+    </div>
+
+    <!-- Progress -->
+    <div class="progress-wrap" id="progress-wrap">
+      <div class="progress-header">
+        <div class="progress-label">
+          <span class="dot pulse" id="dot"></span>
+          <span id="status-text">Starting…</span>
+        </div>
+        <span class="pct-text" id="pct-text">0%</span>
+      </div>
+
+      <div class="bar-track">
+        <div class="bar active" id="bar"></div>
+      </div>
+
+      <div class="stats" id="stats">
+        <div class="stat-item">
+          <span class="stat-label">Size</span>
+          <span class="stat-val" id="s-size">—</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Speed</span>
+          <span class="stat-val accent" id="s-speed">—</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">ETA</span>
+          <span class="stat-val" id="s-eta">—</span>
+        </div>
+      </div>
+    </div>
+
+    <hr class="sep">
+
+    <!-- Logs -->
+    <button class="log-toggle" id="log-toggle" onclick="toggleLogs()">
+      <span class="chevron">▼</span>
+      <span id="log-label">Show logs</span>
+    </button>
+    <div class="log-area" id="log-area"></div>
+
+  </div><!-- /body -->
+</div><!-- /card -->
+
+<script>
+let evtSrc   = null;
+let logsOpen = false;
+
+/* ── clipboard ─────────────────────────────────────────── */
+function pasteUrl() {
+  navigator.clipboard.readText()
+    .then(t => {
+      document.getElementById('url').value = t.trim();
+      document.getElementById('url').focus();
+    })
+    .catch(() => {});
+}
+
+/* ── folder ─────────────────────────────────────────────── */
+function browseFolder() {
+  fetch('/browse', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ current: document.getElementById('outdir').value })
+  })
+  .then(r => r.json())
+  .then(d => { if (d.path) document.getElementById('outdir').value = d.path; });
+}
+
+function openFolder() {
+  fetch('/open-folder', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ path: document.getElementById('outdir').value })
+  });
+}
+
+/* ── ui helpers ─────────────────────────────────────────── */
+function setBar(pct, state) {
+  const bar = document.getElementById('bar');
+  bar.style.width = Math.min(100, Math.max(0, pct)) + '%';
+  bar.className = 'bar' + (state ? ' ' + state : '');
+
+  const dot = document.getElementById('dot');
+  dot.className = 'dot' + (state === 'ok' ? ' ok' : state === 'err' ? ' err' : ' pulse');
+
+  document.getElementById('pct-text').textContent = Math.round(pct) + '%';
+}
+
+function setStatus(msg, cls) {
+  const el = document.getElementById('status-text');
+  el.textContent = msg;
+  el.style.color = cls === 'ok' ? 'var(--success)' : cls === 'err' ? 'var(--danger)' : '';
+}
+
+function setStat(id, val) {
+  document.getElementById(id).textContent = val;
+}
+
+function showStats(show) {
+  document.getElementById('stats').style.display = show ? '' : 'none';
+}
+
+function setRunning(on) {
+  document.getElementById('btn-dl').disabled   = on;
+  document.getElementById('btn-stop').disabled = !on;
+  const icon = document.getElementById('btn-dl-icon');
+  icon.textContent = on ? '⏳' : '⬇';
+}
+
+function showProgress(show) {
+  document.getElementById('progress-wrap').classList.toggle('show', show);
+}
+
+/* ── logs ───────────────────────────────────────────────── */
+function appendLog(msg, cls) {
+  const area = document.getElementById('log-area');
+  const line = document.createElement('div');
+  line.className = 'log-line' + (cls ? ' ' + cls : '');
+  line.textContent = msg;
+  area.appendChild(line);
+  const near = area.scrollHeight - area.scrollTop < area.clientHeight + 80;
+  if (near) area.scrollTop = area.scrollHeight;
+}
+
+function toggleLogs() {
+  logsOpen = !logsOpen;
+  document.getElementById('log-area').classList.toggle('show', logsOpen);
+  document.getElementById('log-toggle').classList.toggle('open', logsOpen);
+  document.getElementById('log-label').textContent = logsOpen ? 'Hide logs' : 'Show logs';
+}
+
+/* ── download ───────────────────────────────────────────── */
+function startDownload() {
+  const url = document.getElementById('url').value.trim();
+  if (!url) { document.getElementById('url').focus(); return; }
+
+  document.getElementById('log-area').innerHTML = '';
+
+  showProgress(true);
+  showStats(false);
+  setBar(0);
+  setStatus('Starting…');
+  setRunning(true);
+
+  fetch('/download', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      url,
+      out_dir: document.getElementById('outdir').value,
+      quality: document.getElementById('quality').value
+    })
+  })
+  .then(r => r.json())
+  .then(d => {
+    if (d.error) {
+      setBar(100, 'err');
+      setStatus('Error: ' + d.error, 'err');
+      setRunning(false);
+      return;
+    }
+    connectSSE();
+  })
+  .catch(e => {
+    setBar(100, 'err');
+    setStatus('Network error', 'err');
+    setRunning(false);
+  });
+}
+
+function stopDownload() {
+  fetch('/stop', { method: 'POST' });
+  setStatus('Stopping…');
+}
+
+function connectSSE() {
+  if (evtSrc) evtSrc.close();
+  evtSrc = new EventSource('/events');
+
+  evtSrc.onmessage = e => {
+    const d = JSON.parse(e.data);
+    if (d.t === 'ping') return;
+
+    if (d.t === 'progress') {
+      showStats(true);
+      setBar(d.pct, 'active');
+      setStatus('Downloading…');
+      setStat('s-size',  d.total);
+      setStat('s-speed', d.speed);
+      setStat('s-eta',   d.eta);
+
+    } else if (d.t === 'status') {
+      setStatus(d.msg);
+      setBar(parseFloat(document.getElementById('bar').style.width || '0'), 'active');
+
+    } else if (d.t === 'log') {
+      const cls = d.msg.startsWith('⚠') ? 'warn' : d.msg.startsWith('✖') ? 'err' : '';
+      appendLog(d.msg, cls);
+
+    } else if (d.t === 'done') {
+      setBar(100, 'ok');
+      setStatus('Download complete', 'ok');
+      setStat('s-speed', '—'); setStat('s-eta', '—');
+      setRunning(false);
+      evtSrc.close();
+
+    } else if (d.t === 'error') {
+      setBar(100, 'err');
+      setStatus(d.msg, 'err');
+      setRunning(false);
+      evtSrc.close();
+      if (!logsOpen) toggleLogs();
+
+    } else if (d.t === 'stopped') {
+      setBar(0);
+      setStatus('Stopped');
+      showStats(false);
+      setRunning(false);
+      evtSrc.close();
+    }
+  };
+
+  evtSrc.onerror = () => evtSrc.close();
+}
+
+/* ── Ctrl+V shortcut outside inputs ─────────────────────── */
+document.addEventListener('keydown', e => {
+  if (!e.ctrlKey || e.key.toLowerCase() !== 'v') return;
+  const active = document.activeElement;
+  if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')) return;
+  navigator.clipboard.readText().then(t => {
+    t = t.trim();
+    if (t.includes('youtube') || t.includes('youtu.be')) {
+      document.getElementById('url').value = t;
+    }
+  }).catch(() => {});
+});
+</script>
+</body>
+</html>

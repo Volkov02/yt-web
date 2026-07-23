@@ -339,6 +339,19 @@ select option { background: var(--surface2); }
       </div>
     </div>
 
+    <!-- Cookies source (needed for HD — YouTube blocks 1080p+ without login) -->
+    <div class="field">
+      <label>Cookies — нужны для HD/1080p+ (без них YouTube отдаёт только 360p)</label>
+      <select id="cookies">
+        <option value="firefox" selected>Firefox</option>
+        <option value="chrome">Chrome</option>
+        <option value="chromium">Chromium</option>
+        <option value="brave">Brave</option>
+        <option value="edge">Edge</option>
+        <option value="">Без куков (возможно только 360p)</option>
+      </select>
+    </div>
+
     <!-- Buttons -->
     <div class="action-row">
       <button class="btn btn-primary" id="btn-dl"   onclick="startDownload()">
@@ -498,7 +511,8 @@ function startDownload() {
     body: JSON.stringify({
       url,
       out_dir: document.getElementById('outdir').value,
-      quality: document.getElementById('quality').value
+      quality: document.getElementById('quality').value,
+      cookies: document.getElementById('cookies').value
     })
   })
   .then(r => r.json())

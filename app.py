@@ -187,7 +187,8 @@ _FORMATS = {
 }
 
 
-def _build_opts(out_dir: str, quality: str, q: queue.Queue, stop: threading.Event) -> dict:
+def _build_opts(out_dir: str, quality: str, q: queue.Queue, stop: threading.Event,
+                cookies_browser: str = "") -> dict:
     opts: dict = {
         "outtmpl":             str(Path(out_dir) / "%(title).180B [%(id)s].%(ext)s"),
         "no_playlist":         True,
@@ -196,6 +197,15 @@ def _build_opts(out_dir: str, quality: str, q: queue.Queue, stop: threading.Even
         "postprocessor_hooks": [_make_pp_hook(q)],
         "format":              _FORMATS.get(quality, _FORMATS["best"]),
     }
+
+    # Cookies from the user's browser. Without them YouTube gates the
+    # high-res DASH formats behind a PO token and yt-dlp falls back to
+    # the progressive 360p format 18 — so HD selections silently degrade.
+    if cookies_browser:
+        opts["cookiesfrombrowser"] = (cookies_browser,)
+        q.put({"t": "log", "msg": f"[cookies] using {cookies_browser} profile"})
+    else:
+        q.put({"t": "log", "msg": "⚠ no cookies — YouTube may limit quality to 360p"})
 
     # ffmpeg — pass full exe path so yt-dlp doesn't need to guess filename
     ffmpeg_exe, ffmpeg_msg = get_ffmpeg_exe()
@@ -228,7 +238,7 @@ def _build_opts(out_dir: str, quality: str, q: queue.Queue, stop: threading.Even
 # Download worker
 # ---------------------------------------------------------------------------
 
-def _run(url: str, out_dir: str, quality: str):
+def _run(url: str, out_dir: str, quality: str, cookies_browser: str = ""):
     q    = _state["queue"]
     stop = _state["stop"]
     try:
@@ -238,7 +248,7 @@ def _run(url: str, out_dir: str, quality: str):
         q.put({"t": "log", "msg": f"[debug] yt-dlp {yt_dlp.version.__version__}"})
 
         Path(out_dir).mkdir(parents=True, exist_ok=True)
-        opts = _build_opts(out_dir, quality, q, stop)
+        opts = _build_opts(out_dir, quality, q, stop, cookies_browser)
         q.put({"t": "log", "msg": f"URL: {url}"})
         with yt_dlp.YoutubeDL(opts) as ydl:
             code = ydl.download([url])
@@ -366,6 +376,7 @@ def start():
         url     = data.get("url", "").strip()
         out_dir = data.get("out_dir", str(Path.home() / "Downloads"))
         quality = data.get("quality", "best")
+        cookies = data.get("cookies", "")
 
         if not url:
             return jsonify({"error": "No URL provided"}), 400
@@ -378,7 +389,7 @@ def start():
         _state["stop"].clear()
         _state["running"] = True
 
-    threading.Thread(target=_run, args=(url, out_dir, quality), daemon=True).start()
+    threading.Thread(target=_run, args=(url, out_dir, quality, cookies), daemon=True).start()
     return jsonify({"ok": True})
 
 

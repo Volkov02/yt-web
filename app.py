@@ -215,12 +215,21 @@ def _build_opts(out_dir: str, quality: str, q: queue.Queue, stop: threading.Even
     else:
         opts["ffmpeg_location"] = ffmpeg_exe
 
-    # JS runtime — Python API uses extractor_args, not js_runtimes string
+    # Let yt-dlp fetch the EJS challenge-solver scripts. YouTube protects
+    # format URLs with an "n" challenge that must be computed in JS; without
+    # the solver every format is dropped and only storyboard images remain.
+    opts["remote_components"] = ["ejs:github"]
+
+    # JS runtime — only Deno (or bun/quickjs) can run the challenge solver;
+    # Node is reported as "unavailable" by yt-dlp, so installing node alone
+    # does NOT help. run.sh installs a local Deno if the system has none.
     js, js_msg = detect_js_runtime()
     q.put({"t": "log", "msg": js_msg})
-    # Always set android fallback; if node/deno found it will also try web player
-    clients = ["android", "web"] if not js else ["ios", "android", "web"]
-    opts["extractor_args"] = {"youtube": {"player_client": clients}}
+
+    # Client choice matters: "tv" returns the full DASH ladder (up to 4K)
+    # and works with cookies. "web" is SABR-gated (images only) and
+    # "android"/"ios" are silently dropped once cookies are set.
+    opts["extractor_args"] = {"youtube": {"player_client": ["tv"]}}
 
     if quality == "audio":
         opts["postprocessors"] = [{

@@ -226,10 +226,10 @@ def _build_opts(out_dir: str, quality: str, q: queue.Queue, stop: threading.Even
     js, js_msg = detect_js_runtime()
     q.put({"t": "log", "msg": js_msg})
 
-    # Client choice matters: "tv" returns the full DASH ladder (up to 4K)
-    # and works with cookies. "web" is SABR-gated (images only) and
-    # "android"/"ios" are silently dropped once cookies are set.
-    opts["extractor_args"] = {"youtube": {"player_client": ["tv"]}}
+    # Client choice matters. "tv_embedded" returns the full DASH ladder
+    # (up to 4K) AND its media URLs download without the GVS PO-token wall
+    # that makes "tv"/"web"/"android" return HTTP 403 on the video data.
+    opts["extractor_args"] = {"youtube": {"player_client": ["tv_embedded"]}}
 
     if quality == "audio":
         opts["postprocessors"] = [{

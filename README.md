@@ -7,8 +7,10 @@
 - Скачивание видео в выбранном качестве
 - Извлечение аудио (MP3)
 - Прогресс-бар в реальном времени (через Server-Sent Events)
-- Упаковка в exe через PyInstaller (`build.bat`)
+- Упаковка в исполняемый файл через PyInstaller (`build.bat` / `build.sh`)
 - ffmpeg подтягивается автоматически через `imageio-ffmpeg`
+
+Работает на Windows, Linux и macOS — код кроссплатформенный, платформенная логика (открытие папки, поиск ffmpeg) выбирается автоматически.
 
 ## Установка
 
@@ -19,21 +21,37 @@ pip install -r requirements.txt
 python app.py
 ```
 
-Откроется браузер на `http://localhost:5000`.
+Откроется браузер на `http://127.0.0.1:5757`.
 
-## Запуск на Windows
+## Запуск
+
+**Windows:**
 
 ```cmd
 run.bat
 ```
 
-## Сборка в exe
+**Linux / macOS:**
+
+```bash
+./run.sh
+```
+
+`run.sh` сам создаёт виртуальное окружение `.venv`, ставит зависимости и запускает сервер.
+
+## Сборка в исполняемый файл
+
+**Windows** — результат `dist/YT Downloader.exe`:
 
 ```cmd
 build.bat
 ```
 
-Результат — в папке `dist/`.
+**Linux / macOS** — результат `dist/yt-downloader`:
+
+```bash
+./build.sh
+```
 
 ## Зависимости
 
